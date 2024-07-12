@@ -86,3 +86,9 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Nest.JS build output
+dist/
+
+# Drizzle migrations output
+migrations/
