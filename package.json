@@ -1,0 +1,19 @@
+{
+   "name": "solana-trading-bot-workspace",
+   "private": true,
+   "scripts": {
+      "build:shared-types": "tsc --project packages/shared-types",
+      "prestart": "npm run build:shared-types",
+      "start": "npm run start --workspace=backend",
+      "predev": "npm run build:shared-types",
+      "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\""
+   },
+   "workspaces": [
+      "apps/*",
+      "packages/*"
+   ],
+   "packageManager": "pnpm@8.15.1+sha512.831cf4c5f8b8374af71521d4d153db49d7086de615c2af7cb5e9d7eb8ba630ddac46fea495d643e552ef2e68a3aa99a3e5e9fbee8696702967504df5c59cb273",
+   "dependencies": {
+      "valibot": "^0.37.0"
+   }
+}

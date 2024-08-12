@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	input[type='number']::-webkit-inner-spin-button,
+	input[type='number']::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	input[type='number'] {
+		appearance: textfield;
+	}
+}
+
+.manrope {
+	font-family: 'Manrope', sans-serif;
+}
+
+.audiowide {
+	font-family: 'Audiowide', sans-serif;
+}
+
+.quicksand {
+	font-family: 'Quicksand', sans-serif;
+}
+
+body {
+	background-color: #121528;
+	min-height: 100vh;
+}
+
+.form-padding {
+	padding-left: 1rem;
+	padding-right: 1rem;
+}

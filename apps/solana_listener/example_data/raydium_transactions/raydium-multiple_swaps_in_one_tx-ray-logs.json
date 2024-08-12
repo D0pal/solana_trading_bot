@@ -1,0 +1,22 @@
+[
+  {
+    "log_type": "3",
+    "amount_in": "2576359926",
+    "minimum_out": "0",
+    "direction": "2",
+    "user_source": "71020679359",
+    "pool_coin": "1871424161181",
+    "pool_pc": "16587134286322",
+    "amount_out": "22746919234"
+  },
+  {
+    "log_type": "3",
+    "amount_in": "54871416398",
+    "minimum_out": "0",
+    "direction": "1",
+    "user_source": "54871416398",
+    "pool_coin": "1874000521107",
+    "pool_pc": "16564387367088",
+    "amount_out": "6171926092"
+  }
+]

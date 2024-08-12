@@ -1,0 +1,9 @@
+{
+   "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+         "shared-types": ["packages/shared-types/src"]
+      }
+   },
+   "include": ["apps/**/*", "packages/**/*"]
+}

@@ -1,0 +1,17 @@
+{
+   "name": "shared-types",
+   "version": "1.0.0",
+   "main": "index.js",
+   "scripts": {
+      "build": "tsc"
+   },
+   "keywords": [],
+   "author": "",
+   "license": "ISC",
+   "description": "",
+   "dependencies": {
+      "backend": "^0.0.1",
+      "drizzle-orm": "^0.32.2",
+      "typescript": "^5.5.4"
+   }
+}

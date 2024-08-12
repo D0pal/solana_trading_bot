@@ -1,0 +1,7 @@
+.svelte-kit
+dist
+migrations
+solana_listener
+example_data
+static
+node_modules
