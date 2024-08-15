@@ -1,5 +1,6 @@
 import { pgTable, pgEnum } from 'drizzle-orm/pg-core'
 import { serial, varchar, text, integer, numeric, boolean, timestamp, unique, jsonb } from 'drizzle-orm/pg-core'
+import { AutoSellPreset, AutoSellStrategy } from 'shared-types/zodSchemas/BuyTokenFormSchema'
 
 // Enum for TokenTransactions time
 export const timeEnum = pgEnum('time', ['5m', '1h', '6h', '12h', '24h'])
@@ -12,6 +13,7 @@ export const autoSellStrategyEnum = pgEnum('auto_sell_strategy', ['simple', 'gri
 export const usersTable = pgTable('users_table', {
    id: serial('id').primaryKey(),
    createdAt: timestamp('created_at').notNull().defaultNow(),
+   autoSellPresets: jsonb('presets').$type<AutoSellPreset[]>(),
 })
 
 export const authProvidersTable = pgTable(
@@ -52,7 +54,7 @@ export const autoSellTable = pgTable('auto_sell', {
    tokenAmountBought: varchar('token_amount_bought', { length: 40 }).notNull(),
    tokenAmountSold: varchar('token_amount_sold', { length: 40 }).notNull(),
    strategy: autoSellStrategyEnum('strategy').notNull(),
-   strategyParams: jsonb('strategy_params').notNull(),
+   strategyParams: jsonb('strategy_params').$type<AutoSellStrategy>().notNull(),
    initialPriceExpressedInSol: varchar('initial_price_expressed_in_sol', { length: 100 }).notNull(),
    highestPriceExpressedInSol: varchar('highest_price_expressed_in_sol', { length: 100 }),
    createdAt: timestamp('created_at').notNull().defaultNow(),

@@ -5,8 +5,11 @@
 	import { copyToClipboard } from '$utils/copyToClipboard';
 	import { userInfo } from '$stores/userStore';
 	import { Radio } from 'flowbite-svelte';
+	import type { BuyTokenFormSchema } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
+	import type { ValidationErrors, Infer } from 'sveltekit-superforms';
 
 	export let walletAddress: string;
+	export let errors: ValidationErrors<Infer<BuyTokenFormSchema>>;
 
 	$: wallets = $userInfo.wallets.map((wallet) => ({
 		...wallet,
@@ -23,10 +26,16 @@
 			token.name.toLowerCase().includes(wallet.searchTerm.toLowerCase())
 		);
 	};
+
+	let isAccordionOpen = false;
+
+	$: if (errors.walletAddress) {
+		isAccordionOpen = true;
+	}
 </script>
 
 <Accordion>
-	<AccordionItem paddingDefault="p-0" class="h-12 rounded-lg px-5">
+	<AccordionItem bind:open={isAccordionOpen} paddingDefault="p-0" class="h-12 rounded-lg px-5">
 		<span slot="header" class="text-white font-bold">Wallets</span>
 		{#each wallets as wallet}
 			<div class="flex p-2 justify-between w-full">
@@ -35,6 +44,7 @@
 					value={wallet.address}
 					bind:group={walletAddress}
 					class="p-1 text-[#35d0de] focus:ring-0"
+					aria-invalid={errors.walletAddress}
 				/>
 				<div class="flex w-full items-center justify-between">
 					<div class="flex items-center">
@@ -53,6 +63,7 @@
 				</div>
 				<button
 					class=" px-2 py-1 bg-[#35d0de] text-sm rounded-lg text-black font-bold"
+					type="button"
 					on:click={() => (wallet.modalOpen = true)}>View</button
 				>
 			</div>
@@ -99,5 +110,8 @@
 				</TableSearch>
 			</Modal>
 		{/each}
+		{#if errors.walletAddress}
+			<p class="text-red-500 text-sm text-center pb-2">{errors.walletAddress[0]}</p>
+		{/if}
 	</AccordionItem>
 </Accordion>

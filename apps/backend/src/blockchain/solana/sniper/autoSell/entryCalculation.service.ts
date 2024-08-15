@@ -8,8 +8,18 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import * as schema from 'src/drizzle/schema'
 import { InsertAutoSell, SelectAutoSell } from 'shared-types/src/drizzle.types'
 import BigNumber from 'bignumber.js'
-import { BuyTokenDto, GridSellStrategyParams, StrategyType } from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
+import {
+   BuyTokenDto,
+   GridStrategy,
+   GridTrailingAutoSellPreset,
+   SimpleAutoSellPreset,
+   TrailingProfitTarget,
+} from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
 import { eq } from 'drizzle-orm'
+
+function isGridTrailingStopLoss(autoSell: GridStrategy): autoSell is GridTrailingAutoSellPreset {
+   return autoSell.stopLossType === 'trailing'
+}
 
 @Injectable()
 export class EntryCalculationService implements OnModuleInit {
@@ -97,7 +107,7 @@ export class EntryCalculationService implements OnModuleInit {
    handlePriceUpdate(prices: Record<string, { price: string }>) {
       for (const entry of this.cachedEntries) {
          const currentPrice = new BigNumber(prices[entry.tokenAddressToSell].price)
-         switch (entry.strategy as StrategyType) {
+         switch (entry.strategy) {
             case 'simple':
                this.checkSimpleAutoSell(entry, currentPrice)
                break
@@ -114,21 +124,21 @@ export class EntryCalculationService implements OnModuleInit {
       if (entry.strategy === 'simple') {
          await this.removeAutoSellEntry(entry)
       } else if (entry.strategy === 'grid') {
-         const strategyParams = entry.strategyParams as GridSellStrategyParams
+         const strategyParams = entry.strategyParams as GridStrategy
          const newTokenAmountSold = new BigNumber(entry.tokenAmountSold).plus(amount).toString()
          const profitTargets = strategyParams.profitTargets
          const targetIndex = profitTargets.findIndex((t) => !t.done)
          if (targetIndex !== -1) {
             profitTargets[targetIndex].done = true
          }
-         let newStrategyParams: GridSellStrategyParams
-         if (strategyParams.stopLossType === 'trailing') {
+         let newStrategyParams: GridStrategy
+         if (isGridTrailingStopLoss(strategyParams) && 'trailingStopLossAfter' in profitTargets[targetIndex]) {
             newStrategyParams = {
                ...strategyParams,
-               profitTargets,
-               trailingStopLoss: strategyParams.profitTargets[targetIndex].trailingStopLossAfter,
+               profitTargets: profitTargets as TrailingProfitTarget[],
+               stopLossPercentage: profitTargets[targetIndex]?.trailingStopLossAfter ?? strategyParams.stopLossPercentage,
             }
-         } else {
+         } else if (!isGridTrailingStopLoss(strategyParams)) {
             newStrategyParams = { ...strategyParams, profitTargets }
          }
          await this.updateAutoSellEntry({ ...entry, strategyParams: newStrategyParams, tokenAmountSold: newTokenAmountSold })
@@ -148,7 +158,7 @@ export class EntryCalculationService implements OnModuleInit {
 
    private checkSimpleAutoSell(entry: SelectAutoSell, currentPrice: BigNumber) {
       if (this.isEntryExecuting(entry.id)) return
-      const { profitPercentage, stopLossPercentage } = entry.strategyParams as BuyTokenDto['autoSell']['simpleStrategy']
+      const { profitPercentage, stopLossPercentage } = entry.strategyParams as SimpleAutoSellPreset
       const profitTrigger = new BigNumber(entry.initialPriceExpressedInSol).times(1 + profitPercentage / 100)
       const lossTrigger = new BigNumber(entry.initialPriceExpressedInSol).times(1 - stopLossPercentage / 100)
 
@@ -163,7 +173,7 @@ export class EntryCalculationService implements OnModuleInit {
    }
 
    private checkGridAutoSell(entry: SelectAutoSell, currentPrice: BigNumber) {
-      const { stopLossType, profitTargets, staticStopLoss, trailingStopLoss } = entry.strategyParams as GridSellStrategyParams
+      const { stopLossType, profitTargets, stopLossPercentage } = entry.strategyParams as GridStrategy
       if (new BigNumber(entry.highestPriceExpressedInSol).lt(currentPrice)) {
          entry.highestPriceExpressedInSol = currentPrice.toString()
          this.updateAutoSellEntry(entry)
@@ -176,15 +186,15 @@ export class EntryCalculationService implements OnModuleInit {
 
       switch (stopLossType) {
          case 'static':
-            const staticLossTrigger = new BigNumber(entry.initialPriceExpressedInSol).times(1 - staticStopLoss / 100)
+            const staticLossTrigger = new BigNumber(entry.initialPriceExpressedInSol).times(1 - stopLossPercentage / 100)
             stopLossTriggered = currentPrice.lte(staticLossTrigger)
             process.stdout.write(', staticLossTrigger ' + staticLossTrigger.toString())
             break
          case 'trailing':
             const highWaterMark = new BigNumber(entry.highestPriceExpressedInSol)
-            const trailingStopLossTrigger = highWaterMark.times(1 - trailingStopLoss / 100)
+            const trailingStopLossTrigger = highWaterMark.times(1 - stopLossPercentage / 100)
             stopLossTriggered = currentPrice.lte(trailingStopLossTrigger)
-            process.stdout.write(', trailingStopLossTrigger: ' + trailingStopLossTrigger.toString() + ', trailingStopLoss: ' + trailingStopLoss)
+            process.stdout.write(', trailingStopLossTrigger: ' + trailingStopLossTrigger.toString() + ', trailingStopLoss: ' + stopLossPercentage)
             break
       }
 

@@ -94,6 +94,7 @@ export class SolanaService implements BlockchainInterface {
    ): Promise<{
       outputAmountUi: BigNumber
       outputAmount: BigNumber
+      txSignature: string
    }> {
       const quoteResponse = await axios.get(`${this.juputerSwapURL}/quote`, {
          params: {
@@ -257,6 +258,7 @@ export class SolanaService implements BlockchainInterface {
       return {
          outputAmountUi,
          outputAmount: outputAmountUi.multipliedBy(10 ** tokenDecimals),
+         txSignature: signature,
       }
    }
 

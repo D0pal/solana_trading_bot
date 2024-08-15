@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import type { UserInfo } from 'shared-types/src/userInfo.interface';
+import type { UserDto } from 'shared-types/src/userInfo.interface';
 import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
 import type { LayoutServerLoad } from './$types';
@@ -28,6 +28,6 @@ export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
 		redirect(302, `/login`);
 	}
 
-	const userInfo: UserInfo = await response.json();
+	const userInfo: UserDto = await response.json();
 	return { userInfo };
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import WalletSelector from './WalletSelector.svelte';
 
-	import { buyTokenFormSchema } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
+	import { buyTokenFormSchema, type BuyTokenDto } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
 	import BuyTradeForm from '$components/trade/BuyTradeForm.svelte';
 	import { Tabs, TabItem } from 'flowbite-svelte';
 	import { Input, Label, Button } from 'flowbite-svelte';
@@ -12,6 +12,7 @@
 	import { superForm, defaults } from 'sveltekit-superforms';
 	import { valibot } from 'sveltekit-superforms/adapters';
 	import { tradingService } from '$services/tradingService';
+	import NumberInput from '$components/common/NumberInput.svelte';
 
 	const buyTokenForm = defaults(valibot(buyTokenFormSchema));
 
@@ -22,14 +23,17 @@
 		onUpdate({ form }) {
 			console.log(form.data);
 			console.log(form.valid);
-			tradingService.buyTokens({
-				tokenAddress: form.data.tokenAddress,
-				walletAddress: form.data.walletAddress,
-				slippage: form.data.slippage,
-				prioritizationFeeLamports: 103928,
-				autoSell: form.data.autoSell,
-				inputAmount: form.data.inputAmount
-			});
+			console.log(form.errors);
+			if (form.valid) {
+				tradingService.buyTokens({
+					tokenAddress: form.data.tokenAddress,
+					walletAddress: form.data.walletAddress,
+					slippage: form.data.slippage,
+					prioritizationFeeLamports: 103928,
+					autoSell: form.data.autoSell,
+					inputAmount: form.data.inputAmount
+				});
+			}
 		}
 	});
 
@@ -47,7 +51,7 @@
 	}
 </script>
 
-<form method="POST" use:enhance class="bg-gray-800 quicksand rounded-lg p-4">
+<form method="POST" use:enhance class="bg-gray-800 quicksand rounded-lg p-4 md:w-96 md:mx-auto">
 	<div class="flex justify-between items-center mb-4 form-padding">
 		<h2 class="text-2xl pl-5 text-white font-bold text-center">Trade</h2>
 		<button
@@ -57,7 +61,7 @@
 		>
 	</div>
 
-	<WalletSelector bind:walletAddress={$form.walletAddress}></WalletSelector>
+	<WalletSelector bind:errors={$errors} bind:walletAddress={$form.walletAddress}></WalletSelector>
 	<Input
 		id="search"
 		on:input={searchTokenInputChanged}
@@ -82,7 +86,7 @@
 				open
 			>
 				<span slot="title">Buy</span>
-				<BuyTradeForm bind:form={$form} />
+				<BuyTradeForm bind:errors={$errors} bind:form={$form} />
 			</TabItem>
 			<TabItem
 				activeClasses="bg-[#B30000]"
@@ -109,9 +113,9 @@
 			<p>Custom slippage</p>
 		</div>
 		<div class="w-1/4">
-			<Input type="number" id="slppage" size="sm" class="text-right pe-6" required bind:value={$form.slippage}>
+			<NumberInput id="slppage" size="sm" class="text-right pe-6 ps-0" required bind:value={$form.slippage}>
 				<p slot="right">%</p>
-			</Input>
+			</NumberInput>
 		</div>
 	</div>
 	<Button class="w-full !bg-[#35d0de] text-black font-bold">Save</Button>

@@ -7,9 +7,10 @@ import { eq, and } from 'drizzle-orm'
 import { EncryptionService } from 'src/encryption/encryption.service'
 import { SolanaService } from 'src/blockchain/solana/solana.service'
 import { InsertAutoSell } from 'shared-types/src/drizzle.types'
-import { BuyTokenDto } from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
+import { AutoSellPreset, BuyTokenDto } from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
 import BigNumber from 'bignumber.js'
 import { EntryCalculationService } from 'src/blockchain/solana/sniper/autoSell/entryCalculation.service'
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class UserService {
@@ -126,44 +127,44 @@ export class UserService {
       slippageInPercentage: number,
       prioritizationFeeLamports: number | 'auto',
       autoSell: BuyTokenDto['autoSell'],
-   ): Promise<void> {
+   ): Promise<{
+      txSignature: string
+   }> {
       const wallet = await this.getWalletByAddress(user, walletAddress)
       const solAmount = new BigNumber(solAmountInUi).multipliedBy(10 ** 9)
-      try {
-         const { outputAmount, outputAmountUi } = await this.solanaService.makeJupiterSwapTransaction(
-            this.solanaService.knownAddresses.WSOL,
-            tokenAddress,
-            solAmount,
-            slippageInPercentage * 100,
-            this.solanaService.base58ToKeypair(this.encryptionService.decrypt(wallet.walletPk, user.createdAt.toISOString())),
-            prioritizationFeeLamports,
-         )
+      const { outputAmount, outputAmountUi, txSignature } = await this.solanaService.makeJupiterSwapTransaction(
+         this.solanaService.knownAddresses.WSOL,
+         tokenAddress,
+         solAmount,
+         slippageInPercentage * 100,
+         this.solanaService.base58ToKeypair(this.encryptionService.decrypt(wallet.walletPk, user.createdAt.toISOString())),
+         prioritizationFeeLamports,
+      )
 
-         if (outputAmount === undefined || outputAmountUi === undefined || outputAmount.isZero() || outputAmountUi.isZero()) {
-            return
-         }
-
-         console.log('outputAmount', outputAmount.toString())
-         console.log('outputAmountUi', outputAmountUi.toString())
-         console.log('initialPriceExpressedInSol', new BigNumber(solAmountInUi).div(outputAmountUi).toString())
-
-         if (autoSell.enabled) {
-            await this.entryCalculationService.addAutoSellEntry({
-               initialPriceExpressedInSol: new BigNumber(solAmountInUi).div(outputAmountUi).toString(),
-               highestPriceExpressedInSol: new BigNumber(solAmountInUi).div(outputAmountUi).toString(),
-               slippage: slippageInPercentage.toString(),
-               strategy: autoSell.strategy,
-               strategyParams: autoSell.strategy === 'simple' ? autoSell.simpleStrategy : autoSell.gridStrategy,
-               tokenAddressToSell: tokenAddress,
-               tokenAmountBought: outputAmount.toString(),
-               tokenAmountSold: '0',
-               userId: user.id,
-               walletId: wallet.id,
-            })
-         }
-      } catch (error) {
-         console.error('Failed to buy token:', error)
+      if (outputAmount === undefined || outputAmountUi === undefined || outputAmount.isZero() || outputAmountUi.isZero()) {
+         throw new Error('Failed to buy token')
       }
+
+      console.log('outputAmount', outputAmount.toString())
+      console.log('outputAmountUi', outputAmountUi.toString())
+      console.log('initialPriceExpressedInSol', new BigNumber(solAmountInUi).div(outputAmountUi).toString())
+
+      if (autoSell.enabled) {
+         await this.entryCalculationService.addAutoSellEntry({
+            initialPriceExpressedInSol: new BigNumber(solAmountInUi).div(outputAmountUi).toString(),
+            highestPriceExpressedInSol: new BigNumber(solAmountInUi).div(outputAmountUi).toString(),
+            slippage: slippageInPercentage.toString(),
+            strategy: autoSell.strategy.strategyName,
+            strategyParams: autoSell.strategy,
+            tokenAddressToSell: tokenAddress,
+            tokenAmountBought: outputAmount.toString(),
+            tokenAmountSold: '0',
+            userId: user.id,
+            walletId: wallet.id,
+         })
+      }
+
+      return { txSignature }
    }
 
    async sellToken(
@@ -184,5 +185,40 @@ export class UserService {
       //    this.solanaService.base58ToKeypair(this.encryptionService.decrypt(wallet.walletPk, user.createdAt.toISOString())),
       //    prioritizationFeeLamports,
       // )
+   }
+
+   async addAutoSellPreset(user: schema.SelectUser, autoSellpreset: AutoSellPreset) {
+      const userAutoSellPresets = user.autoSellPresets ?? []
+      autoSellpreset.id = uuidv4()
+      await this.db
+         .update(schema.usersTable)
+         .set({
+            autoSellPresets: [...userAutoSellPresets, autoSellpreset],
+         })
+         .where(eq(schema.usersTable.id, user.id))
+   }
+
+   async editAutoSellPreset(user: schema.SelectUser, autoSellpreset: AutoSellPreset) {
+      const userAutoSellPresets = user.autoSellPresets ?? []
+      const index = userAutoSellPresets.findIndex((preset) => preset.id === autoSellpreset.id)
+      if (index === -1) throw new Error('Auto sell preset not found')
+      userAutoSellPresets[index] = autoSellpreset
+      await this.db
+         .update(schema.usersTable)
+         .set({
+            autoSellPresets: userAutoSellPresets,
+         })
+         .where(eq(schema.usersTable.id, user.id))
+   }
+
+   async deleteAutoSellPreset(user: schema.SelectUser, presetId: string) {
+      const userAutoSellPresets = user.autoSellPresets ?? []
+      const updatedUserAutoSellPresets = userAutoSellPresets.filter((preset) => preset.id !== presetId)
+      await this.db
+         .update(schema.usersTable)
+         .set({
+            autoSellPresets: updatedUserAutoSellPresets,
+         })
+         .where(eq(schema.usersTable.id, user.id))
    }
 }

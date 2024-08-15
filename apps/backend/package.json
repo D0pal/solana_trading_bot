@@ -5,6 +5,7 @@
    "author": "",
    "private": true,
    "license": "UNLICENSED",
+   "packageManager": "npm@10.5.2",
    "scripts": {
       "build": "nest build",
       "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -53,7 +54,9 @@
       "promise-retry": "^2.0.1",
       "reflect-metadata": "^0.2.0",
       "rxjs": "^7.8.1",
-      "shared-types": "^1.0.0"
+      "shared-types": "^1.0.0",
+      "uuid": "^10.0.0",
+      "valibot": "^0.37.0"
    },
    "devDependencies": {
       "@nestjs/cli": "^10.0.0",
