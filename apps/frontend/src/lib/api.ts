@@ -1,13 +1,6 @@
+import { PUBLIC_BACKEND_URL } from '$env/static/public';
 import axios, { AxiosError } from 'axios';
 import toast from 'svelte-french-toast';
-
-// import { token } from '../stores/auth';
-import { PUBLIC_BACKEND_URL } from '$env/static/public';
-
-// let jwtToken = '';
-// token.subscribe((value: string) => {
-// 	jwtToken = value;
-// });
 
 interface ApiError {
 	message: string;
@@ -15,7 +8,6 @@ interface ApiError {
 
 const handleError = (error: AxiosError<ApiError>) => {
 	const errorMessage = error.response?.data?.message || 'An unexpected error occurred';
-	// console.error('API Error:', errorMessage);
 	toast.error(errorMessage);
 	return Promise.reject(error);
 };
@@ -30,9 +22,6 @@ api.interceptors.response.use(
 );
 
 api.interceptors.request.use((config) => {
-	// if (jwtToken) {
-	// 	config.headers.Authorization = `Bearer ${jwtToken}`;
-	// }
 	config.withCredentials = true;
 	return config;
 });

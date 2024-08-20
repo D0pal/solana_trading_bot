@@ -1,53 +1,51 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import api from '$lib/api';
-import type { AutoSellPreset } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
-import { userInfo } from '$stores/userStore';
-import toast from 'svelte-french-toast';
+import { genericServiceCall } from '$lib/apiUtils';
 import { loadingStore } from '$stores/loadingStore';
+import { userInfo } from '$stores/userStore';
+import type { AutoSellPreset, UserSettings } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
+import toast from 'svelte-french-toast';
 
 export const userService = {
 	async addAutoSellPreset(autoSellPreset: AutoSellPreset) {
-		const loadingKey = 'addAutoSellPreset';
-		loadingStore.setLoading(loadingKey, true);
-
-		try {
-			const response = await api.post<{ message: string }>('/user/add-auto-sell-preset', autoSellPreset);
-			toast.success(response.data.message);
-			userInfo.addAutoSellPreset(autoSellPreset);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loadingStore.setLoading(loadingKey, false);
-		}
+		return genericServiceCall({
+			method: 'post',
+			url: '/user/add-auto-sell-preset',
+			loadingKey: 'addAutoSellPreset',
+			payload: autoSellPreset,
+			successMessage: 'Auto-sell preset added successfully',
+			onSuccess: () => userInfo.addAutoSellPreset(autoSellPreset)
+		});
 	},
 
 	async editAutoSellPreset(autoSellPreset: AutoSellPreset) {
-		const loadingKey = 'editAutoSellPreset';
-		loadingStore.setLoading(loadingKey, true);
-
-		try {
-			const response = await api.post<{ message: string }>('/user/edit-auto-sell-preset', autoSellPreset);
-			toast.success(response.data.message);
-			userInfo.editAutoSellPreset(autoSellPreset);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loadingStore.setLoading(loadingKey, false);
-		}
+		return genericServiceCall({
+			method: 'post',
+			url: '/user/edit-auto-sell-preset',
+			loadingKey: 'editAutoSellPreset',
+			payload: autoSellPreset,
+			successMessage: 'Auto-sell preset updated successfully',
+			onSuccess: () => userInfo.editAutoSellPreset(autoSellPreset)
+		});
 	},
 
 	async deleteAutoSellPreset(autoSellPresetId: string) {
-		const loadingKey = 'deleteAutoSellPreset';
-		loadingStore.setLoading(loadingKey, true);
+		return genericServiceCall({
+			method: 'delete',
+			url: `/user/delete-auto-sell-preset/${autoSellPresetId}`,
+			loadingKey: 'deleteAutoSellPreset',
+			successMessage: 'Auto-sell preset deleted successfully',
+			onSuccess: () => userInfo.deleteAutoSellPreset(autoSellPresetId)
+		});
+	},
 
-		try {
-			const response = await api.delete<{ message: string }>('/user/delete-auto-sell-preset/' + autoSellPresetId);
-			toast.success(response.data.message);
-			userInfo.deleteAutoSellPreset(autoSellPresetId);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loadingStore.setLoading(loadingKey, false);
-		}
+	async updateUserSettings(userSettings: UserSettings) {
+		return genericServiceCall({
+			method: 'post',
+			url: '/user/update-user-settings',
+			loadingKey: 'updateUserSettings',
+			payload: userSettings,
+			onSuccess: () => userInfo.updateSettings(userSettings)
+		});
 	}
 };

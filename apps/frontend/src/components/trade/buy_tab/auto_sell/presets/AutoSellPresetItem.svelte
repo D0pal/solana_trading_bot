@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { Button, Input, Label, Modal, Spinner, Range } from 'flowbite-svelte';
-	import { type AutoSellPreset, isGridStrategy } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
-	import { CogOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
-	import NumberInput from '$components/common/NumberInput.svelte';
-	import GridAutoSellStrategy from '$components/trade/GridAutoSellStrategy.svelte';
-	import pkg from 'lodash';
+	import GridAutoSellStrategy from '$components/trade/buy_tab/auto_sell/grid/GridAutoSellStrategy.svelte';
 	import { loadingStore } from '$stores/loadingStore';
-	import { createEventDispatcher } from 'svelte';
-	import { Trash2 } from 'lucide-svelte';
 	import { formatNumber } from '$utils/formatters';
+	import { Button, Input, Label, Modal, Range, Spinner } from 'flowbite-svelte';
+	import { CogOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
+	import pkg from 'lodash';
+	import { Trash2 } from 'lucide-svelte';
+	import { type AutoSellPreset, isGridStrategy } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
+	import { createEventDispatcher } from 'svelte';
 
 	const { cloneDeep } = pkg;
 

@@ -1,24 +1,24 @@
 import {
-   object,
-   string,
-   number,
-   boolean,
    array,
-   minLength,
-   union,
-   literal,
-   minValue,
-   maxValue,
-   pipe,
-   reduceItems,
-   variant,
+   boolean,
+   check,
    InferInput,
    InferOutput,
-   optional,
-   transform,
-   regex,
+   literal,
    maxLength,
-   check,
+   maxValue,
+   minLength,
+   minValue,
+   number,
+   object,
+   optional,
+   pipe,
+   reduceItems,
+   regex,
+   string,
+   transform,
+   union,
+   variant,
 } from "valibot";
 
 const addressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -78,11 +78,11 @@ const autoSellSchema = object({
 });
 
 export const buyTokenFormSchema = object({
-   walletAddress: pipe(string(), regex(addressRegex, "Please select an address"), minLength(32), maxLength(44)),
+   walletAddresses: pipe(array(pipe(string(), regex(addressRegex, "Please select an address"), minLength(32), maxLength(44))), minLength(1)),
    tokenAddress: pipe(string(), regex(addressRegex, "Invalid address"), minLength(32), maxLength(44)),
    inputAmount: pipe(number(), minValue(0.0000001)),
    slippage: pipe(number(), minValue(0), maxValue(100)),
-   prioritizationFeeLamports: pipe(number(), minValue(0)),
+   prioritizationFeeInSolana: pipe(number(), minValue(0)),
    autoSell: autoSellSchema,
 });
 
@@ -91,6 +91,13 @@ const autoSellPresetSchema = object({
    name: string(),
    strategy: autoSellStrategies,
 });
+
+export const userSettingsSchema = object({
+   slippage: number(),
+   prioritizationFeeInSolana: number(),
+});
+
+export type UserSettings = InferInput<typeof userSettingsSchema>;
 
 export type BuyTokenFormSchema = typeof buyTokenFormSchema;
 export type BuyTokenDto = InferOutput<typeof buyTokenFormSchema>;
@@ -117,4 +124,22 @@ export function isGridStrategy(autoSell: AutoSellStrategy): autoSell is GridStra
 
 export function isGridTrailingStopLoss(autoSell: GridStrategy): autoSell is GridTrailingAutoSellPreset {
    return autoSell.stopLossType === "trailing";
+}
+
+export function createBuyTokenFormWithDefaults(userSettings: UserSettings): BuyTokenDto {
+   return {
+      walletAddresses: [],
+      tokenAddress: "",
+      inputAmount: 0,
+      slippage: userSettings.slippage,
+      prioritizationFeeInSolana: userSettings.prioritizationFeeInSolana, // Convert SOL to lamports
+      autoSell: {
+         enabled: false,
+         strategy: {
+            strategyName: "simple",
+            profitPercentage: 10,
+            stopLossPercentage: 5,
+         },
+      },
+   };
 }

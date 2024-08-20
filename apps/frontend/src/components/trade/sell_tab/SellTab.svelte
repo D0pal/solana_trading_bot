@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { Label, Input, InputAddon, ButtonGroup } from 'flowbite-svelte';
 	import { ArrowUpDown } from 'lucide-svelte';
 	import { Button } from 'flowbite-svelte';
@@ -9,19 +9,19 @@
 	import { InfoCircleOutline } from 'flowbite-svelte-icons';
 	import { formatNumber } from '$utils/formatters';
 
-	export let formData;
-	export let updateFormData: (key: string, value: unknown) => void;
+	// export let form: Infer<BuyTokenFormSchema>;
+	// export let errors: ValidationErrors<Infer<BuyTokenFormSchema>>;
 
-	$: inputTokenAmount = formData.inputAmount;
-	$: oneSolPriceInUsd = $tokenPricesInUSD[PUBLIC_WSOL_ADDRESS];
-	$: oneSecondaryTokenInSol = $tokenPricesInUSD[$tokenInfo.address] / $tokenPricesInUSD[PUBLIC_WSOL_ADDRESS];
-	$: outputSolana = inputTokenAmount * oneSecondaryTokenInSol;
+	// $: inputTokenAmount = formData.inputAmount;
+	// $: oneSolPriceInUsd = $tokenPricesInUSD[PUBLIC_WSOL_ADDRESS];
+	// $: oneSecondaryTokenInSol = $tokenPricesInUSD[$tokenInfo.address] / $tokenPricesInUSD[PUBLIC_WSOL_ADDRESS];
+	// $: outputSolana = inputTokenAmount * oneSecondaryTokenInSol;
 
-	function onInputTokenChange(e: Event) {
-		const target = e.target as HTMLInputElement;
-		const value = parseFloat(target.value) || 0;
-		updateFormData('inputAmount', value);
-	}
+	// function onInputTokenChange(e: Event) {
+	// 	const target = e.target as HTMLInputElement;
+	// 	const value = parseFloat(target.value) || 0;
+	// 	updateFormData('inputAmount', value);
+	// }
 </script>
 
 <div class="w-full">
@@ -79,4 +79,4 @@
 			1 {$tokenInfo.symbol} ≈ {formatNumber(parseFloat(oneSecondaryTokenInSol.toFixed(8)))} SOL
 		</p>
 	</div>
-</div>
+</div> -->

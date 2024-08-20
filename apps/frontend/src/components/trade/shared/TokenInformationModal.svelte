@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { tokenInfo } from '$stores/tokenStore';
+	import { formatNumber, formatPercentage, formatUSD } from '$utils/formatters';
 	import {
-		Button,
 		Modal,
 		Progressbar,
-		Tabs,
 		TabItem,
 		Table,
 		TableBody,
@@ -11,15 +11,13 @@
 		TableBodyRow,
 		TableHead,
 		TableHeadCell,
-		Card
+		Tabs
 	} from 'flowbite-svelte';
-	import { tokenInfo } from '$stores/tokenStore';
-	import { formatNumber, formatUSD, formatPercentage } from '$utils/formatters';
-	import { ArrowUpRightFromSquareOutline, CheckOutline, CloseOutline } from 'flowbite-svelte-icons';
-	import { X, Telegram, Discord } from 'svelte-simples';
-	import { Globe, Crown } from 'lucide-svelte';
+	import { CheckOutline, CloseOutline } from 'flowbite-svelte-icons';
+	// import { X, Telegram, Discord } from 'svelte-simples';
 	import CopyToClipboard from '$components/common/CopyToClipboard.svelte';
 	import { tokenPricesInUSD } from '$stores/priceStore';
+	import { Crown } from 'lucide-svelte';
 
 	export let open = false;
 
@@ -29,11 +27,6 @@
 		};
 		return knownAccounts[address] || `${address.slice(0, 4)}...${address.slice(-4)}`;
 	}
-
-	$: transactions = $tokenInfo.transactions.sort((a, b) => {
-		const order = ['5m', '1h', '6h', '24h'];
-		return order.indexOf(a.time) - order.indexOf(b.time);
-	});
 
 	$: createdOnPumpFun = $tokenInfo.socialMediaLinks.find((link) => link.platform === 'PumpFun');
 </script>
@@ -148,7 +141,7 @@
 										rel="noopener noreferrer"
 										class="text-blue-400 hover:text-blue-300"
 									>
-										{#if link.platform === 'Twitter'}
+										<!-- {#if link.platform === 'Twitter'}
 											<X size="20" />
 										{:else if link.platform === 'Telegram'}
 											<Telegram size="20" />
@@ -156,7 +149,7 @@
 											<Discord size="20" />
 										{:else if link.platform != 'PumpFun'}
 											<Globe size="20" />
-										{/if}
+										{/if} -->
 									</a>
 								{/each}
 							</div>

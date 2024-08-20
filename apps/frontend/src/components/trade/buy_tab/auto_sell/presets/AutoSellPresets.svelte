@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { AccordionItem, Accordion, Modal } from 'flowbite-svelte';
-	import type { AutoSellPreset, AutoSellStrategy } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
+	import { Accordion, AccordionItem } from 'flowbite-svelte';
+	import type { AutoSellPreset } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
 	import AutoSellPresetItem from './AutoSellPresetItem.svelte';
 
 	export let presets: AutoSellPreset[];

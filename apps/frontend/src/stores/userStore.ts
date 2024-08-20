@@ -1,10 +1,14 @@
+import { type UserDto, type UserWalletInfo } from 'shared-types/src/userInfo.interface';
+import type { AutoSellPreset, UserSettings } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
 import { writable } from 'svelte/store';
-import { type UserDto } from 'shared-types/src/userInfo.interface';
-import type { AutoSellPreset } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
 
 export const defaultUserInfo: UserDto = {
 	wallets: [],
-	autoSellPresets: []
+	autoSellPresets: [],
+	settings: {
+		prioritizationFeeInSolana: 0,
+		slippage: 0
+	}
 };
 
 function createUserStore() {
@@ -37,6 +41,20 @@ function createUserStore() {
 				return {
 					...userInfo,
 					autoSellPresets: userInfo.autoSellPresets.filter((preset) => preset.id !== presetId)
+				};
+			}),
+		updateSettings: (newSettings: UserSettings) =>
+			update((userInfo) => {
+				return {
+					...userInfo,
+					settings: newSettings
+				};
+			}),
+		updateWallets: (wallets: UserWalletInfo[]) =>
+			update((userInfo) => {
+				return {
+					...userInfo,
+					wallets
 				};
 			})
 	};

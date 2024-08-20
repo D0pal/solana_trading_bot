@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { TelegramAuthData } from 'shared-types/src/TelegramAuthData.interface';
-	import { PUBLIC_BACKEND_URL } from '$env/static/public';
 	import { goto } from '$app/navigation';
+	import { PUBLIC_BACKEND_URL } from '$env/static/public';
+	import type { TelegramAuthData } from 'shared-types/src/TelegramAuthData.interface';
 
 	async function onTelegramAuth(user: TelegramAuthData) {
 		console.log(JSON.stringify(user));

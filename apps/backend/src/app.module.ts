@@ -6,6 +6,10 @@ import { UserModule } from './user/user.module'
 import { SolanaModule } from './blockchain/solana/solana.module'
 import { AuthModule } from './auth/auth.module'
 import { PassportModule } from '@nestjs/passport'
+import { SolanaSniperModule } from './blockchain/solana/sniper/solanaSniper.module'
+import { EncryptionModule } from './encryption/encryption.module'
+import { APP_FILTER } from '@nestjs/core'
+import { AllExceptionsFilter } from './common/filters/AllExceptionsFilter.filter'
 
 @Module({
    imports: [
@@ -16,8 +20,16 @@ import { PassportModule } from '@nestjs/passport'
       UserModule,
       SolanaModule,
       AuthModule,
+      SolanaSniperModule,
+      EncryptionModule,
    ],
    controllers: [AppController],
-   providers: [AppService],
+   providers: [
+      AppService,
+      {
+         provide: APP_FILTER,
+         useClass: AllExceptionsFilter,
+      },
+   ],
 })
 export class AppModule {}

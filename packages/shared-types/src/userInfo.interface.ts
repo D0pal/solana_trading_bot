@@ -1,6 +1,6 @@
 // This file could be placed in a shared directory accessible by both frontend and backend
 
-import { AutoSellPreset } from "./zodSchemas/BuyTokenFormSchema";
+import { AutoSellPreset, UserSettings } from "./zodSchemas/BuyTokenFormSchema";
 
 export interface UserWalletInfo {
    solBalance: number;
@@ -11,4 +11,5 @@ export interface UserWalletInfo {
 export interface UserDto {
    wallets: UserWalletInfo[];
    autoSellPresets: AutoSellPreset[];
+   settings: UserSettings;
 }

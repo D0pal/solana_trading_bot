@@ -1,6 +1,6 @@
 import { pgTable, pgEnum } from 'drizzle-orm/pg-core'
 import { serial, varchar, text, integer, numeric, boolean, timestamp, unique, jsonb } from 'drizzle-orm/pg-core'
-import { AutoSellPreset, AutoSellStrategy } from 'shared-types/zodSchemas/BuyTokenFormSchema'
+import { AutoSellPreset, AutoSellStrategy, UserSettings } from 'shared-types/zodSchemas/BuyTokenFormSchema'
 
 // Enum for TokenTransactions time
 export const timeEnum = pgEnum('time', ['5m', '1h', '6h', '12h', '24h'])
@@ -14,6 +14,7 @@ export const usersTable = pgTable('users_table', {
    id: serial('id').primaryKey(),
    createdAt: timestamp('created_at').notNull().defaultNow(),
    autoSellPresets: jsonb('presets').$type<AutoSellPreset[]>(),
+   settings: jsonb('settings').$type<UserSettings>(),
 })
 
 export const authProvidersTable = pgTable(

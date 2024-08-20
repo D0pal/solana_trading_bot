@@ -12,7 +12,13 @@ export class AuthService {
       let user = await this.userService.findByTelegramId(telegramAuthData.id)
       if (!user) {
          // Create a new user if it doesn't exist
-         const insertUserData: InsertUser = {}
+         const insertUserData: InsertUser = {
+            settings: {
+               prioritizationFeeInSolana: 0.00001,
+               slippage: 0.005,
+            },
+            autoSellPresets: [],
+         }
          user = await this.userService.create(insertUserData, {
             provider: 'telegram',
             providerId: telegramAuthData.id.toString(),

@@ -2,9 +2,10 @@
 import { Controller, Get, Post, Body, Param, Delete, Session, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common'
 import { UserService } from './user.service'
 import { AuthenticatedGuard } from 'src/auth/utils/authenticated.guard'
-import { AutoSellPreset, BuyTokenDto } from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
-import { UserDto } from 'shared-types/src/userInfo.interface'
+import { AutoSellPreset, BuyTokenDto, UserSettings } from 'shared-types/src/zodSchemas/BuyTokenFormSchema'
+import { UserDto, UserWalletInfo } from 'shared-types/src/userInfo.interface'
 import { SolanaService } from 'src/blockchain/solana/solana.service'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 @Controller('user')
 export class UserController {
@@ -35,24 +36,71 @@ export class UserController {
             name: wallet.name,
          })),
          autoSellPresets: user.autoSellPresets ? user.autoSellPresets : [],
+         settings: user.settings,
       }
+   }
+
+   @Get('wallets')
+   @UseGuards(AuthenticatedGuard)
+   async getWallets(@Request() req): Promise<UserWalletInfo[]> {
+      const wallets = await this.userService.getWallets(req.user)
+      const walletBalances = await this.solanaService.getBalanceForMultipleAddresses(wallets.map((wallet) => wallet.walletAddress))
+      return wallets.map((wallet) => ({
+         solBalance: walletBalances[wallet.walletAddress] / 10 ** 9,
+         address: wallet.walletAddress,
+         name: wallet.name,
+      }))
+   }
+
+   @Post('wallets')
+   @UseGuards(AuthenticatedGuard)
+   async createWallet(@Request() req, @Body('name') name: string) {
+      return this.userService.createWallet(req.user, name)
+   }
+
+   @Delete('wallets/:address')
+   @UseGuards(AuthenticatedGuard)
+   async deleteWallet(@Request() req, @Param('address') walletAddress: string) {
+      return this.userService.deleteWallet(req.user, walletAddress)
+   }
+
+   @Get('wallets/:address/export')
+   @UseGuards(AuthenticatedGuard)
+   async exportPrivateKey(@Request() req, @Param('address') address: string) {
+      return this.userService.exportPrivateKey(req.user, address)
+   }
+
+   @Post('wallets/import')
+   @UseGuards(AuthenticatedGuard)
+   async importWallet(@Request() req, @Body() importData: { privateKey: string; name: string }) {
+      return this.userService.importWalletFromPk(req.user, importData.privateKey, importData.name)
+   }
+
+   @Post('transfer')
+   @UseGuards(AuthenticatedGuard)
+   async transferFunds(
+      @Request() req,
+      @Body() transferData: { fromAddress: string; toAddress: string; amount: number },
+   ): Promise<{ message: string }> {
+      const txSignature = await this.userService.transferFunds(req.user, transferData)
+      return { message: 'Funds transferred successfully ' + txSignature }
    }
 
    @Post('buy-token')
    @UseGuards(AuthenticatedGuard)
    async buyToken(@Body() buyTokenDto: BuyTokenDto, @Request() req): Promise<{ message: string }> {
       try {
-         const { walletAddress, tokenAddress, inputAmount, slippage, prioritizationFeeLamports, autoSell } = buyTokenDto
-         const { txSignature } = await this.userService.buyToken(
+         const { walletAddresses, tokenAddress, inputAmount, slippage, prioritizationFeeInSolana, autoSell } = buyTokenDto
+         const { txSignatures } = await this.userService.buyToken(
             req.user,
-            walletAddress,
+            walletAddresses,
             tokenAddress,
             inputAmount,
             slippage,
-            prioritizationFeeLamports,
+            prioritizationFeeInSolana * LAMPORTS_PER_SOL,
             autoSell,
          )
-         return { message: 'Token bought successfully ' + txSignature }
+         return { message: 'Token bought successfully ' + txSignatures.join(',') }
       } catch (error) {
          if (error instanceof HttpException) throw error
          throw new HttpException('Failed to buy token', HttpStatus.BAD_REQUEST)
@@ -94,6 +142,18 @@ export class UserController {
       } catch (error) {
          if (error instanceof HttpException) throw error
          throw new HttpException('Failed to delete auto-sell preset', HttpStatus.BAD_REQUEST)
+      }
+   }
+
+   @Post('update-user-settings')
+   @UseGuards(AuthenticatedGuard)
+   async updateUserSettings(@Request() req, @Body() settings: UserSettings) {
+      try {
+         await this.userService.updateUserSettings(req.user.id, settings)
+         return { message: 'Settings updated successfully' }
+      } catch (error) {
+         if (error instanceof HttpException) throw error
+         throw new HttpException('Failed to update settings', HttpStatus.BAD_REQUEST)
       }
    }
 

@@ -1,31 +1,25 @@
 <script lang="ts">
+	import NumberInput from '$components/common/NumberInput.svelte';
+	import { defaultGridStaticAutoSell, defaultGridTrailingAutoSell, initializeAutoSell } from '$lib/autoSellPresets';
+	import { formatNumber } from '$utils/formatters';
 	import {
+		Button,
 		Label,
-		Input,
-		ButtonGroup,
-		TabItem,
-		Tabs,
-		Select,
 		Progressbar,
+		Select,
 		Table,
 		TableBody,
 		TableBodyCell,
 		TableBodyRow,
 		TableHead,
-		TableHeadCell,
-		Button,
-		Helper
+		TableHeadCell
 	} from 'flowbite-svelte';
 	import type {
 		AutoSellStrategy,
 		GridStrategy,
 		TrailingProfitTarget
 	} from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
-	import NumberInput from '$components/common/NumberInput.svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { initializeAutoSell, defaultGridTrailingAutoSell, defaultGridStaticAutoSell } from '$lib/autoSellPresets';
-	import SaveAutoSellPreset from './auto_sell_preset/SaveAutoSellPreset.svelte';
-	import { formatNumber } from '$utils/formatters';
 
 	export let strategy: GridStrategy;
 	export let inputAmount: number = 0;
@@ -42,9 +36,10 @@
 	function calculateWorstCaseScenario(initialInvestment: number, strategy: GridStrategy): number {
 		switch (strategy.stopLossType) {
 			case 'trailing':
-			case 'static':
+			case 'static': {
 				const lossAmount = initialInvestment * (strategy.stopLossPercentage / 100);
 				return -lossAmount;
+			}
 			case 'breakeven':
 				return -initialInvestment * (strategy.stopLossPercentage / 100);
 		}

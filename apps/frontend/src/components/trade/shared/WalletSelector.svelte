@@ -1,17 +1,37 @@
 <script lang="ts">
-	import { FileCopyOutline } from 'flowbite-svelte-icons';
-	import { AccordionItem, Accordion, Modal } from 'flowbite-svelte';
-	import { TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, TableSearch } from 'flowbite-svelte';
-	import { copyToClipboard } from '$utils/copyToClipboard';
 	import { userInfo } from '$stores/userStore';
-	import { Radio } from 'flowbite-svelte';
+	import { copyToClipboard } from '$utils/copyToClipboard';
+	import {
+		Accordion,
+		AccordionItem,
+		Checkbox,
+		Modal,
+		TableBody,
+		TableBodyCell,
+		TableBodyRow,
+		TableHead,
+		TableHeadCell,
+		TableSearch
+	} from 'flowbite-svelte';
+	import { FileCopyOutline } from 'flowbite-svelte-icons';
 	import type { BuyTokenFormSchema } from 'shared-types/src/zodSchemas/BuyTokenFormSchema';
-	import type { ValidationErrors, Infer } from 'sveltekit-superforms';
+	import type { Infer, ValidationErrors } from 'sveltekit-superforms';
 
-	export let walletAddress: string;
+	interface Wallet {
+		address: string;
+		name: string;
+		solBalance: number;
+		checked: boolean;
+		modalOpen: boolean;
+		searchTerm: string;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		tokenHoldings: any[];
+	}
+
+	export let selectedWallets: string[] = [];
 	export let errors: ValidationErrors<Infer<BuyTokenFormSchema>>;
 
-	$: wallets = $userInfo.wallets.map((wallet) => ({
+	let wallets: Wallet[] = $userInfo.wallets.map((wallet) => ({
 		...wallet,
 		checked: false,
 		modalOpen: false,
@@ -19,9 +39,7 @@
 		tokenHoldings: []
 	}));
 
-	$: filteredTokenHoldings = (
-		/** @type {{ tokenHoldings: any[]; searchTerm: string; }} */ wallet: { tokenHoldings: any[]; searchTerm: string }
-	) => {
+	$: filteredTokenHoldings = (wallet: Wallet) => {
 		return wallet.tokenHoldings.filter((token: { name: string }) =>
 			token.name.toLowerCase().includes(wallet.searchTerm.toLowerCase())
 		);
@@ -29,22 +47,23 @@
 
 	let isAccordionOpen = false;
 
-	$: if (errors.walletAddress) {
+	$: if (errors.walletAddresses) {
 		isAccordionOpen = true;
 	}
+
+	$: selectedWallets = wallets.filter((wallet) => wallet.checked).map((wallet) => wallet.address);
 </script>
 
 <Accordion>
 	<AccordionItem bind:open={isAccordionOpen} paddingDefault="p-0" class="h-12 rounded-lg px-5">
 		<span slot="header" class="text-white font-bold">Wallets</span>
-		{#each wallets as wallet}
+		{#each wallets as wallet, index}
 			<div class="flex p-2 justify-between w-full">
-				<Radio
-					name="wallets"
+				<Checkbox
 					value={wallet.address}
-					bind:group={walletAddress}
+					bind:checked={wallet.checked}
 					class="p-1 text-[#35d0de] focus:ring-0"
-					aria-invalid={errors.walletAddress}
+					aria-invalid={errors.walletAddresses ? errors.walletAddresses[index] : ''}
 				/>
 				<div class="flex w-full items-center justify-between">
 					<div class="flex items-center">
@@ -53,7 +72,7 @@
 						</p>
 
 						<p class="ml-1 flex items-center">
-							(<button on:click={() => copyToClipboard(wallet.address)} class="">
+							(<button on:click={() => copyToClipboard(wallet.address)} class="" type="button">
 								<FileCopyOutline class="w-4 h-4 text-gray-500 hover:!text-white" />
 							</button>{wallet.address.length > 4 ? `${wallet.address.substring(0, 4)}..` : wallet.address})
 						</p>
@@ -67,6 +86,7 @@
 					on:click={() => (wallet.modalOpen = true)}>View</button
 				>
 			</div>
+
 			<Modal title="Token Holdings" bind:open={wallet.modalOpen} autoclose outsideclose={true}>
 				<div class="flex items-center justify-center">
 					<p>Wallet:</p>
@@ -110,8 +130,8 @@
 				</TableSearch>
 			</Modal>
 		{/each}
-		{#if errors.walletAddress}
-			<p class="text-red-500 text-sm text-center pb-2">{errors.walletAddress[0]}</p>
+		{#if errors.walletAddresses}
+			<p class="text-red-500 text-sm text-center pb-2">{errors.walletAddresses[0]}</p>
 		{/if}
 	</AccordionItem>
 </Accordion>

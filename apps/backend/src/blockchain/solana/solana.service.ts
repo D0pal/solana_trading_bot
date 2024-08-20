@@ -11,7 +11,10 @@ import {
    SystemProgram,
    TokenBalance,
    LAMPORTS_PER_SOL,
+   Transaction,
+   sendAndConfirmTransaction,
 } from '@solana/web3.js'
+import { isSolanaError, SOLANA_ERROR__INSTRUCTION_ERROR__INSUFFICIENT_FUNDS } from '@solana/errors'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import { Umi } from '@metaplex-foundation/umi'
 import * as bs58 from 'bs58'
@@ -22,7 +25,7 @@ import * as fs from 'fs'
 import { JupiterPriceReponse } from 'shared-types/src/JupiterPriceResponse.interface'
 import BigNumber from 'bignumber.js'
 
-export class SolanaService implements BlockchainInterface {
+export class SolanaService {
    public quickNodeConnection: Connection = new Connection(
       'https://frosty-neat-film.solana-mainnet.quiknode.pro/bc93aa68cf48e78a3afd0267b839ff4482f0958f/',
    )
@@ -37,10 +40,6 @@ export class SolanaService implements BlockchainInterface {
       WSOL: 'So11111111111111111111111111111111111111112',
    }
 
-   connect() {
-      // Implementation details
-   }
-
    createNewWallet() {
       return Keypair.generate()
    }
@@ -51,6 +50,26 @@ export class SolanaService implements BlockchainInterface {
          return Keypair.fromSecretKey(privateKeyBuffer)
       } catch (error) {
          throw new Error('Invalid base58 private key.')
+      }
+   }
+
+   async transferSol(fromWallet: Keypair, toAddress: string, amount: number): Promise<string> {
+      const transaction = new Transaction().add(
+         SystemProgram.transfer({
+            fromPubkey: fromWallet.publicKey,
+            toPubkey: new PublicKey(toAddress),
+            lamports: amount * LAMPORTS_PER_SOL,
+         }),
+      )
+      try {
+         const signature = await sendAndConfirmTransaction(this.quickNodeConnection, transaction, [fromWallet])
+         return signature
+      } catch (error) {
+         console.log(error)
+         if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_ERROR__INSUFFICIENT_FUNDS)) {
+            console.log(error)
+            throw new Error('Insufficient balance')
+         }
       }
    }
 
@@ -78,10 +97,6 @@ export class SolanaService implements BlockchainInterface {
 
          return acc
       }, {})
-   }
-
-   async sendTransaction(transactionDetails: any): Promise<any> {
-      // Implementation details
    }
 
    async makeJupiterSwapTransaction(
@@ -230,7 +245,7 @@ export class SolanaService implements BlockchainInterface {
       }
 
       if (transactionResponse.meta?.err) {
-         console.error(transactionResponse.meta?.err)
+         throw new Error(`Transaction failed: ${transactionResponse.meta.err}`)
       }
 
       const findTokenBalance = (balances: Array<TokenBalance>, mint: string, owner: string): BigNumber => {
